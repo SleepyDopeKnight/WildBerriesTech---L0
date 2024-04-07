@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./database:/docker-entrypoint-initdb.d/
+      - ./migration:/docker-entrypoint-initdb.d/
   nats-streaming:
     image: nats-streaming:latest
     container_name: nats-streaming

@@ -2,27 +2,26 @@ package readDB
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"time"
 )
 
 type Orders struct {
-	OrderUid          string     `json:"order_uid"`
-	TrackNumber       string     `json:"track_number"`
-	Entry             string     `json:"entry"`
-	Delivery          []Delivery `json:"delivery"`
-	Payment           []Payment  `json:"payment"`
-	Items             []Items    `json:"items"`
-	Locale            string     `json:"locale"`
-	InternalSignature string     `json:"internal_signature"`
-	CustomerId        string     `json:"customer_id"`
-	DeliveryService   string     `json:"delivery_service"`
-	Shardkey          string     `json:"shardkey"`
-	SmId              int        `json:"sm_id"`
-	DateCreated       time.Time  `json:"date_created"`
-	OofShard          string     `json:"oof_shard"`
+	OrderUid          string    `json:"order_uid"`
+	TrackNumber       string    `json:"track_number"`
+	Entry             string    `json:"entry"`
+	Delivery          Delivery  `json:"delivery"`
+	Payment           Payment   `json:"payment"`
+	Items             []Items   `json:"items"`
+	Locale            string    `json:"locale"`
+	InternalSignature string    `json:"internal_signature"`
+	CustomerId        string    `json:"customer_id"`
+	DeliveryService   string    `json:"delivery_service"`
+	Shardkey          string    `json:"shardkey"`
+	SmId              int       `json:"sm_id"`
+	DateCreated       time.Time `json:"date_created"`
+	OofShard          string    `json:"oof_shard"`
 }
 
 type Delivery struct {
@@ -66,7 +65,7 @@ type Items struct {
 func FileOpen(filePath string) ([]byte, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return nil, err
 	}
 	return data, err
@@ -76,7 +75,7 @@ func FileDeserialize(fileData []byte) (Orders, error) {
 	var orders Orders
 	err := json.Unmarshal(fileData, &orders)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 		return orders, err
 	}
 	return orders, nil
