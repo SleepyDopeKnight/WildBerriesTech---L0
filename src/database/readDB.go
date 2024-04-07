@@ -71,12 +71,12 @@ func FileOpen(filePath string) ([]byte, error) {
 	return data, err
 }
 
-func FileDeserialize(fileData []byte) (Orders, error) {
+func FileDeserialize(fileData []byte) (*Orders, error) {
 	var orders Orders
 	err := json.Unmarshal(fileData, &orders)
 	if err != nil {
 		log.Fatal(err)
-		return orders, err
+		return nil, err
 	}
-	return orders, nil
+	return &orders, nil
 }

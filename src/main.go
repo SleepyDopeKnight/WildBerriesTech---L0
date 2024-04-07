@@ -47,7 +47,7 @@ func main() {
 	}
 }
 
-func FillDatabase(orders readDB.Orders, db *sql.DB) {
+func FillDatabase(orders *readDB.Orders, db *sql.DB) {
 	for i := 0; i < len(orders.Items); i++ {
 		_, _ = db.Exec("INSERT INTO items (chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
 			orders.Items[i].ChrtId, orders.Items[i].TrackNumber, orders.Items[i].Price, orders.Items[i].Rid, orders.Items[i].Name, orders.Items[i].Sale,
