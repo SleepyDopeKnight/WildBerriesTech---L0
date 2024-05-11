@@ -30,7 +30,7 @@ func main() {
 		log.Fatal(err)
 	}
 	_, err = natsStreamConnection.Subscribe("orders", func(message *stan.Msg) {
-		log.Printf("Received a message: %s\n", string(message.Data))
+		//log.Printf("Received a message: %s\n", string(message.Data))
 		orders, _ := readDB.FileDeserialize(message.Data)
 		FillDatabase(orders, db)
 	})
@@ -38,6 +38,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	_, err = natsStreamConnection.Subscribe("id", func(message *stan.Msg) {
+		log.Printf("Received a message: %s\n", string(message.Data))
+		rows, err := db.Query("select * from orders join public.delivery d on orders.order_uid = d.order_uid "+
+			"join public.items i on i.track_number = orders.track_number "+
+			"join public.payment p on orders.order_uid = p.transaction "+
+			"WHERE orders.order_uid = $1", message.Data)
+		for rows.Next() {
+			fmt.Println(rows)
+		}
+		defer rows.Close()
+		natsStreamConnection.Publish("data", message.Data)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	})
 	//err = natsStreamConnection.Close()
 	//if err != nil {
 	//	log.Fatal(err)
@@ -62,3 +78,7 @@ func FillDatabase(orders *readDB.Orders, db *sql.DB) {
 		orders.Payment.Transaction, orders.Payment.RequestId, orders.Payment.Currency, orders.Payment.Provider, orders.Payment.Amount, orders.Payment.PaymentDt,
 		orders.Payment.Bank, orders.Payment.DeliveryCost, orders.Payment.GoodsTotal, orders.Payment.CustomFee)
 }
+
+//func FoundData(string id) {
+//
+//}

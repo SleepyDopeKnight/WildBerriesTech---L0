@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="UTF-8">
+    <body>
+        <h2>Поиск данных по ID заказа</h2>
+        <form action="" method="get">
+            <input name="text" placeholder="OrderUid..." type="search_id">
+            <button type="submit">Поиск</button>
+        </form>
+        <h4>Данные по заказу:</h4>
+        <li>order_uid: {{.OrderUid}}</li>
+        <li>track_number: {{.TrackNumber}}</li>
+        <li>entry: {{.Entry}}</li>
+        <li>delivery:</li>
+        <ul>
+            <li>order_uid: {{.OrderUid}}</li>
+            <li>name: {{.Name}}</li>
+            <li>phone: {{.Phone}}</li>
+            <li>zip: {{.Zip}}</li>
+            <li>city: {{.City}}</li>
+            <li>address: {{.Address}}</li>
+            <li>region: {{.Region}}</li>
+            <li>email: {{.Email}}</li>
+        </ul>
+        <li>payment:</li>
+        <ul>
+            <li>transaction: {{.Transaction}}</li>
+            <li>request_id: {{.RequestId}}</li>
+            <li>currency: {{.Currency}}</li>
+            <li>provider: {{.Provider}}</li>
+            <li>amount: {{.Amount}}</li>
+            <li>payment_dt: {{.PaymentDt}}</li>
+            <li>bank: {{.Bank}}</li>
+            <li>delivery_cost: {{.DeliveryCost}}</li>
+            <li>goods_total: {{.GoodsTotal}}</li>
+            <li>custom_fee: {{.CustomFee}}</li>
+        </ul>
+        <li>items:</li>
+        <ul>
+            <li>chrt_id: {{.ChrtId}}</li>
+            <li>track_number: {{.TrackNumber}}</li>
+            <li>price: {{.Price}}</li>
+            <li>rid: {{.Rid}}</li>
+            <li>name: {{.Name}}</li>
+            <li>sale: {{.Sale}}</li>
+            <li>size: {{.Size}}</li>
+            <li>total_price: {{.TotalPrice}}</li>
+            <li>nm_id: {{.NmId}}</li>
+            <li>brand: {{.Brand}}</li>
+            <li>status: {{.Status}}</li>
+        </ul>
+        <li>locale: {{.Locale}}</li>
+        <li>internal_signature: {{.InternalSignature}}</li>
+        <li>customer_id: {{.CustomerId}}</li>
+        <li>delivery_service: {{.DeliveryService}}</li>
+        <li>shardkey: {{.Shardkey}}</li>
+        <li>sm_id: {{.SmId}}</li>
+        <li>date_created: {{.DateCreated}}</li>
+        <li>oof_shard: {{.OofShard}}</li>
+    </body>
+</html>
