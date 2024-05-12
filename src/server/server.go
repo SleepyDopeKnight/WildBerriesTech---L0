@@ -15,12 +15,16 @@ func main() {
 		log.Fatal(err)
 	}
 	var foundedOrder *readDB.Orders
+	semaphore := make(chan struct{}, 1)
 	_, err = natsStreamConnection.Subscribe("data", func(message *stan.Msg) {
 		log.Printf("Received a message: %s\n", string(message.Data))
 		foundedOrder, _ = readDB.FileDeserialize(message.Data)
+		if foundedOrder != nil {
+			semaphore <- struct{}{}
+		}
 	})
 
-	page, err := template.ParseFiles("/Users/chamomiv/go/WildBerriesTech-L0/templates/index.html")
+	page, err := template.ParseFiles("/Users/monke/go/WildBerriesTech-L0/templates/index.html")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
@@ -29,7 +33,7 @@ func main() {
 		err = page.Execute(w, nil)
 	})
 
-	http.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
 		//page, err := template.ParseFiles("../../templates/index.html")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -39,19 +43,8 @@ func main() {
 			err = natsStreamConnection.Publish("id", []byte(orderID))
 
 		}
-		if foundedOrder != nil {
-			err = page.Execute(w, foundedOrder)
-			//} else {
-			//	err = page.Execute(w, nil)
-		}
-
-		//if err != nil {
-		//	http.Error(w, err.Error(), http.StatusInternalServerError)
-		//}
-		//
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
+		<-semaphore
+		err = page.Execute(w, foundedOrder)
 		fmt.Println(orderID)
 
 	})
