@@ -3,6 +3,7 @@ package main
 import (
 	readDB "L0/database"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/nats-io/stan.go"
@@ -40,15 +41,33 @@ func main() {
 
 	_, err = natsStreamConnection.Subscribe("id", func(message *stan.Msg) {
 		log.Printf("Received a message: %s\n", string(message.Data))
-		rows, err := db.Query("select * from orders join public.delivery d on orders.order_uid = d.order_uid "+
-			"join public.items i on i.track_number = orders.track_number "+
-			"join public.payment p on orders.order_uid = p.transaction "+
-			"WHERE orders.order_uid = $1", message.Data)
-		for rows.Next() {
-			fmt.Println(rows)
+		wantedOrder := readDB.Orders{}
+		var item readDB.Items
+		orderPaymentDeliveryRows, err := db.Query("select * from orders join delivery d on orders.order_uid = d.order_uid "+
+			"join payment p on orders.order_uid = p.transaction "+
+			"WHERE orders.order_uid = $1 and orders.order_uid = p.transaction;", message.Data)
+		for orderPaymentDeliveryRows.Next() {
+			err = orderPaymentDeliveryRows.Scan(&wantedOrder.OrderUid,
+				&wantedOrder.TrackNumber, &wantedOrder.Locale, &wantedOrder.InternalSignature, &wantedOrder.Entry,
+				&wantedOrder.CustomerId, &wantedOrder.DeliveryService, &wantedOrder.Shardkey, &wantedOrder.SmId,
+				&wantedOrder.DateCreated, &wantedOrder.OofShard, &wantedOrder.Delivery.OrderUid, &wantedOrder.Delivery.Name,
+				&wantedOrder.Delivery.Phone, &wantedOrder.Delivery.Zip, &wantedOrder.Delivery.City, &wantedOrder.Delivery.Address,
+				&wantedOrder.Delivery.Region, &wantedOrder.Delivery.Email, &wantedOrder.Payment.Transaction,
+				&wantedOrder.Payment.RequestId, &wantedOrder.Payment.Currency, &wantedOrder.Payment.Provider,
+				&wantedOrder.Payment.Amount, &wantedOrder.Payment.PaymentDt, &wantedOrder.Payment.Bank,
+				&wantedOrder.Payment.DeliveryCost, &wantedOrder.Payment.GoodsTotal, &wantedOrder.Payment.CustomFee)
 		}
-		defer rows.Close()
-		natsStreamConnection.Publish("data", message.Data)
+		defer orderPaymentDeliveryRows.Close()
+		itemsRows, err := db.Query("select * from items where track_number = (select track_number from orders where order_uid = $1);", message.Data)
+		for itemsRows.Next() {
+			err = itemsRows.Scan(&item.ChrtId, &item.TrackNumber, &item.Price, &item.Rid, &item.Name, &item.Sale, &item.Size,
+				&item.TotalPrice, &item.NmId, &item.Brand, &item.Status)
+		}
+		wantedOrder.Items = append(wantedOrder.Items, item)
+		defer itemsRows.Close()
+		log.Println(wantedOrder)
+		outgoingOrder, err := json.Marshal(wantedOrder)
+		natsStreamConnection.Publish("data", []byte(outgoingOrder))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -79,6 +98,6 @@ func FillDatabase(orders *readDB.Orders, db *sql.DB) {
 		orders.Payment.Bank, orders.Payment.DeliveryCost, orders.Payment.GoodsTotal, orders.Payment.CustomFee)
 }
 
-//func FoundData(string id) {
+//func FindData(string id) {
 //
 //}

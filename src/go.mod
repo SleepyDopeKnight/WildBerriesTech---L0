@@ -6,6 +6,7 @@ require github.com/nats-io/nats.go v1.34.0
 
 require (
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/nats-io/nkeys v0.4.7 // indirect
