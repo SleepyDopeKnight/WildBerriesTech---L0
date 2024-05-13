@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	fileData, _ := readDB.FileOpen("../../models/model.json")
+	fileData := readDB.FileOpen("../../models/model.json")
 
 	natsStreamConnection, err := stan.Connect("test-cluster", "publisher", stan.NatsURL(stan.DefaultNatsURL))
 	if err != nil {

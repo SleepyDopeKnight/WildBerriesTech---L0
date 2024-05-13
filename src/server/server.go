@@ -2,51 +2,65 @@ package main
 
 import (
 	readDB "L0/database"
-	"fmt"
 	"github.com/nats-io/stan.go"
 	"html/template"
 	"log"
 	"net/http"
 )
 
+type Handler struct {
+	NatsStreamConnection stan.Conn
+	Page                 *template.Template
+	Err                  error
+	Semaphore            chan *readDB.Orders
+}
+
 func main() {
 	natsStreamConnection, err := stan.Connect("test-cluster", "server", stan.NatsURL(stan.DefaultNatsURL))
+	defer natsStreamConnection.Close()
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	var foundedOrder *readDB.Orders
-	semaphore := make(chan struct{}, 1)
+	semaphore := make(chan *readDB.Orders, 1)
 	_, err = natsStreamConnection.Subscribe("data", func(message *stan.Msg) {
-		log.Printf("Received a message: %s\n", string(message.Data))
-		foundedOrder, _ = readDB.FileDeserialize(message.Data)
-		if foundedOrder != nil {
-			semaphore <- struct{}{}
-		}
+		semaphore <- readDB.FileDeserialize(message.Data)
 	})
 
-	page, err := template.ParseFiles("/Users/monke/go/WildBerriesTech-L0/templates/index.html")
+	page, err := template.ParseFiles("/Users/chamomiv/go/WildBerriesTech-L0/templates/index.html")
+	h := Handler{NatsStreamConnection: natsStreamConnection, Page: page, Err: err, Semaphore: semaphore}
+	http.HandleFunc("/", h.rootHandler)
+	http.HandleFunc("/data", h.dataHandler)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		err = page.Execute(w, nil)
-	})
+	err = http.ListenAndServe(":8080", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
-	http.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
-		//page, err := template.ParseFiles("../../templates/index.html")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		orderID := r.FormValue("id")
-		if orderID != "" {
-			err = natsStreamConnection.Publish("id", []byte(orderID))
+func (h *Handler) rootHandler(w http.ResponseWriter, r *http.Request) {
+	if h.Err != nil {
+		http.Error(w, h.Err.Error(), http.StatusInternalServerError)
+	}
+	err := h.Page.Execute(w, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
-		}
-		<-semaphore
-		err = page.Execute(w, foundedOrder)
-		fmt.Println(orderID)
+func (h *Handler) dataHandler(w http.ResponseWriter, r *http.Request) {
+	if h.Err != nil {
+		http.Error(w, h.Err.Error(), http.StatusInternalServerError)
+	}
+	orderID := r.FormValue("id")
+	err := h.NatsStreamConnection.Publish("id", []byte(orderID))
 
-	})
-	http.ListenAndServe(":8080", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	foundedOrder := <-h.Semaphore
+	err = h.Page.Execute(w, foundedOrder)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

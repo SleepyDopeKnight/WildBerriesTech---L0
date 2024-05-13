@@ -27,12 +27,12 @@ func main() {
 	defer db.Close()
 
 	natsStreamConnection, err := stan.Connect("test-cluster", "consumer", stan.NatsURL(stan.DefaultNatsURL))
+	defer natsStreamConnection.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 	_, err = natsStreamConnection.Subscribe("orders", func(message *stan.Msg) {
-		//log.Printf("Received a message: %s\n", string(message.Data))
-		orders, _ := readDB.FileDeserialize(message.Data)
+		orders := readDB.FileDeserialize(message.Data)
 		FillDatabase(orders, db)
 	})
 	if err != nil {
@@ -40,43 +40,19 @@ func main() {
 	}
 
 	_, err = natsStreamConnection.Subscribe("id", func(message *stan.Msg) {
-		log.Printf("Received a message: %s\n", string(message.Data))
-		wantedOrder := readDB.Orders{}
-		var item readDB.Items
-		orderPaymentDeliveryRows, err := db.Query("select * from orders join delivery d on orders.order_uid = d.order_uid "+
-			"join payment p on orders.order_uid = p.transaction "+
-			"WHERE orders.order_uid = $1 and orders.order_uid = p.transaction;", message.Data)
-		for orderPaymentDeliveryRows.Next() {
-			err = orderPaymentDeliveryRows.Scan(&wantedOrder.OrderUid,
-				&wantedOrder.TrackNumber, &wantedOrder.Locale, &wantedOrder.InternalSignature, &wantedOrder.Entry,
-				&wantedOrder.CustomerId, &wantedOrder.DeliveryService, &wantedOrder.Shardkey, &wantedOrder.SmId,
-				&wantedOrder.DateCreated, &wantedOrder.OofShard, &wantedOrder.Delivery.OrderUid, &wantedOrder.Delivery.Name,
-				&wantedOrder.Delivery.Phone, &wantedOrder.Delivery.Zip, &wantedOrder.Delivery.City, &wantedOrder.Delivery.Address,
-				&wantedOrder.Delivery.Region, &wantedOrder.Delivery.Email, &wantedOrder.Payment.Transaction,
-				&wantedOrder.Payment.RequestId, &wantedOrder.Payment.Currency, &wantedOrder.Payment.Provider,
-				&wantedOrder.Payment.Amount, &wantedOrder.Payment.PaymentDt, &wantedOrder.Payment.Bank,
-				&wantedOrder.Payment.DeliveryCost, &wantedOrder.Payment.GoodsTotal, &wantedOrder.Payment.CustomFee)
-		}
-		defer orderPaymentDeliveryRows.Close()
-		itemsRows, err := db.Query("select * from items where track_number = (select track_number from orders where order_uid = $1);", message.Data)
-		for itemsRows.Next() {
-			err = itemsRows.Scan(&item.ChrtId, &item.TrackNumber, &item.Price, &item.Rid, &item.Name, &item.Sale, &item.Size,
-				&item.TotalPrice, &item.NmId, &item.Brand, &item.Status)
-		}
-		wantedOrder.Items = append(wantedOrder.Items, item)
-		defer itemsRows.Close()
-		log.Println(wantedOrder)
+		wantedOrder := FindOrder(message, db)
 		outgoingOrder, err := json.Marshal(wantedOrder)
-		natsStreamConnection.Publish("data", []byte(outgoingOrder))
 		if err != nil {
 			log.Fatal(err)
 		}
-
+		err = natsStreamConnection.Publish("data", []byte(outgoingOrder))
+		if err != nil {
+			log.Fatal(err)
+		}
 	})
-	//err = natsStreamConnection.Close()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	select {}
 }
@@ -98,6 +74,61 @@ func FillDatabase(orders *readDB.Orders, db *sql.DB) {
 		orders.Payment.Bank, orders.Payment.DeliveryCost, orders.Payment.GoodsTotal, orders.Payment.CustomFee)
 }
 
-//func FindData(string id) {
-//
-//}
+func FindOrder(message *stan.Msg, db *sql.DB) readDB.Orders {
+	wantedOrder := readDB.Orders{}
+	var item readDB.Items
+	orderRows := RowsFromDB(db, message, "orders", "order_uid")
+	for orderRows.Next() {
+		err := orderRows.Scan(&wantedOrder.OrderUid, &wantedOrder.TrackNumber, &wantedOrder.Entry, &wantedOrder.Locale,
+			&wantedOrder.InternalSignature, &wantedOrder.CustomerId, &wantedOrder.DeliveryService, &wantedOrder.Shardkey,
+			&wantedOrder.SmId, &wantedOrder.DateCreated, &wantedOrder.OofShard)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	defer orderRows.Close()
+
+	paymentRows := RowsFromDB(db, message, "payment", "transaction")
+	for paymentRows.Next() {
+		err := paymentRows.Scan(&wantedOrder.Payment.Transaction, &wantedOrder.Payment.RequestId, &wantedOrder.Payment.Currency,
+			&wantedOrder.Payment.Provider, &wantedOrder.Payment.Amount, &wantedOrder.Payment.PaymentDt, &wantedOrder.Payment.Bank,
+			&wantedOrder.Payment.DeliveryCost, &wantedOrder.Payment.GoodsTotal, &wantedOrder.Payment.CustomFee)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	defer paymentRows.Close()
+
+	deliveryRows := RowsFromDB(db, message, "delivery", "order_uid")
+	for deliveryRows.Next() {
+		err := deliveryRows.Scan(&wantedOrder.Delivery.OrderUid, &wantedOrder.Delivery.Name, &wantedOrder.Delivery.Phone,
+			&wantedOrder.Delivery.Zip, &wantedOrder.Delivery.City, &wantedOrder.Delivery.Address,
+			&wantedOrder.Delivery.Region, &wantedOrder.Delivery.Email)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	defer deliveryRows.Close()
+
+	itemsRows, err := db.Query("select * from items where track_number = (select track_number from orders where order_uid = $1);", message.Data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer itemsRows.Close()
+	for itemsRows.Next() {
+		err = itemsRows.Scan(&item.ChrtId, &item.TrackNumber, &item.Price, &item.Rid, &item.Name, &item.Sale, &item.Size,
+			&item.TotalPrice, &item.NmId, &item.Brand, &item.Status)
+	}
+	wantedOrder.Items = append(wantedOrder.Items, item)
+	return wantedOrder
+}
+
+func RowsFromDB(db *sql.DB, message *stan.Msg, tableName, rowName string) *sql.Rows {
+	query := fmt.Sprintf("select * from %s where %s = '%s'", tableName, rowName, message.Data)
+	fmt.Println(query)
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return rows
+}

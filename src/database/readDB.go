@@ -62,21 +62,21 @@ type Items struct {
 	Status      int    `json:"status"`
 }
 
-func FileOpen(filePath string) ([]byte, error) {
+func FileOpen(filePath string) []byte {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
+		return nil
 	}
-	return data, err
+	return data
 }
 
-func FileDeserialize(fileData []byte) (*Orders, error) {
+func FileDeserialize(fileData []byte) *Orders {
 	var orders Orders
 	err := json.Unmarshal(fileData, &orders)
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
+		return nil
 	}
-	return &orders, nil
+	return &orders
 }
