@@ -53,14 +53,22 @@ func ChannelForGetJSON(natsStreamConnection stan.Conn, db *sql.DB) {
 
 func ChannelsForHandleIdDRequest(natsStreamConnection stan.Conn, db *sql.DB) {
 	_, err := natsStreamConnection.Subscribe("id", func(message *stan.Msg) {
-		wantedOrder := FindOrder(message, db)
-		outgoingOrder, err := json.Marshal(wantedOrder)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = natsStreamConnection.Publish("data", []byte(outgoingOrder))
-		if err != nil {
-			log.Fatal(err)
+		err := db.Ping()
+		if err == nil {
+			wantedOrder := FindOrder(message, db)
+			outgoingOrder, err := json.Marshal(wantedOrder)
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = natsStreamConnection.Publish("data", []byte(outgoingOrder))
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			err = natsStreamConnection.Publish("data", []byte(nil))
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	})
 	if err != nil {
