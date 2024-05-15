@@ -8,14 +8,17 @@ import (
 )
 
 func main() {
-	fileData := readDB.FileOpen("../models/model.json")
+	filesData := readDB.FileOpen("/Users/chamomiv/go/WildBerriesTech-L0/models/")
 
 	natsStreamConnection, err := stan.Connect("test-cluster", "publisher", stan.NatsURL(stan.DefaultNatsURL))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-	err = natsStreamConnection.Publish("orders", []byte(fileData))
-	if err != nil {
-		log.Fatal(err)
+
+	for _, fileData := range filesData {
+		err = natsStreamConnection.Publish("orders", []byte(fileData))
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }

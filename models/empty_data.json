@@ -1,0 +1,36 @@
+{
+  "order_uid": "",
+  "track_number": "",
+  "entry": "",
+  "delivery": {
+    "order_uid": "",
+    "name": "",
+    "phone": "",
+    "zip": "",
+    "city": "",
+    "address": "",
+    "region": "",
+    "email": ""
+  },
+  "payment": {
+    "transaction": "",
+    "request_id": "",
+    "currency": "",
+    "provider": "",
+    "amount": 0,
+    "payment_dt": 0,
+    "bank": "",
+    "delivery_cost": 0,
+    "goods_total": 0,
+    "custom_fee": 0
+  },
+  "items": [],
+  "locale": "",
+  "internal_signature": "",
+  "customer_id": "",
+  "delivery_service": "",
+  "shardkey": "",
+  "sm_id": 0,
+  "date_created": "0001-01-01T00:00:00Z",
+  "oof_shard": ""
+}

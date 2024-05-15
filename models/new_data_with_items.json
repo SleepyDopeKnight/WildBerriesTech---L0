@@ -1,0 +1,63 @@
+{
+  "order_uid": "2b9e2de1c4d",
+  "track_number": "WBILTRACK456",
+  "entry": "WBIL",
+  "delivery": {
+    "order_uid": "2b9e2de1c4d",
+    "name": "Alice Smith",
+    "phone": "+9876543210",
+    "zip": "54321",
+    "city": "Anycity",
+    "address": "456 Elm Street",
+    "region": "Anyregion",
+    "email": "alice.smith@example.com"
+  },
+  "payment": {
+    "transaction": "2b9e2de1c4d",
+    "request_id": "request456",
+    "currency": "EUR",
+    "provider": "visa",
+    "amount": 200,
+    "payment_dt": 1638000000,
+    "bank": "Bank Y",
+    "delivery_cost": 20,
+    "goods_total": 180,
+    "custom_fee": 5
+  },
+  "items": [
+    {
+      "chrt_id": 789012,
+      "track_number": "WBILTRACK456",
+      "price": 60,
+      "rid": "rid456",
+      "name": "Another Item",
+      "sale": 10,
+      "size": "Large",
+      "total_price": 54,
+      "nm_id": 456789,
+      "brand": "Brand Z",
+      "status": 201
+    },
+    {
+      "chrt_id": 789013,
+      "track_number": "WBILTRACK456",
+      "price": 120,
+      "rid": "rid457",
+      "name": "Yet Another Item",
+      "sale": 0,
+      "size": "Small",
+      "total_price": 126,
+      "nm_id": 456790,
+      "brand": "Brand Z",
+      "status": 200
+    }
+  ],
+  "locale": "en",
+  "internal_signature": "signature123",
+  "customer_id": "customer456",
+  "delivery_service": "standard",
+  "shardkey": "shard2",
+  "sm_id": 456,
+  "date_created": "2023-01-16T10:00:00Z",
+  "oof_shard": "shard3"
+}

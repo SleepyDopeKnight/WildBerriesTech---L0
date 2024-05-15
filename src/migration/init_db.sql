@@ -1,22 +1,33 @@
-create table if not exists items
+create table if not exists delivery
 (
-    chrt_id integer,
-    track_number varchar primary key,
-    price integer,
-    rid varchar,
+    order_uid varchar primary key,
     name varchar,
-    sale integer,
-    size varchar,
-    total_price integer,
-    nm_id integer,
-    brand varchar,
-    status integer
-    );
+    phone varchar,
+    zip varchar,
+    city varchar,
+    address varchar,
+    region varchar,
+    email varchar
+);
+
+create table if not exists payment
+(
+    transaction varchar primary key,
+    request_id varchar,
+    currency varchar,
+    provider varchar,
+    amount integer,
+    payment_dt integer,
+    bank varchar,
+    delivery_cost integer,
+    goods_total integer,
+    custom_fee integer
+);
 
 create table if not exists orders
 (
-    order_uid varchar primary key,
-    track_number varchar,
+    order_uid varchar ,
+    track_number varchar primary key,
     entry varchar,
     locale varchar,
     internal_signature varchar,
@@ -27,35 +38,23 @@ create table if not exists orders
     date_created timestamp,
     oof_shard varchar,
 
-    constraint fk_orders_track_number foreign key (track_number) references items (track_number)
-);
+    constraint fk_delivery_order_uid foreign key (order_uid) references delivery (order_uid),
+    constraint fk_payment_transaction foreign key (order_uid) references payment (transaction)
+    );
 
-create table if not exists delivery
+create table if not exists items
 (
-    order_uid varchar,
+    chrt_id integer,
+    track_number varchar,
+    price integer,
+    rid varchar,
     name varchar,
-    phone varchar,
-    zip varchar,
-    city varchar,
-    address varchar,
-    region varchar,
-    email varchar,
+    sale integer,
+    size varchar,
+    total_price integer,
+    nm_id integer,
+    brand varchar,
+    status integer,
 
-    constraint fk_orders_order_uid foreign key (order_uid) references orders (order_uid)
-);
-
-create table if not exists payment
-(
-    transaction varchar,
-    request_id varchar,
-    currency varchar,
-    provider varchar,
-    amount integer,
-    payment_dt integer,
-    bank varchar,
-    delivery_cost integer,
-    goods_total integer,
-    custom_fee integer,
-
-    constraint fk_orders_transaction foreign key (transaction) references orders (order_uid)
-);
+    constraint fk_items_track_number foreign key (track_number) references orders (track_number)
+    );

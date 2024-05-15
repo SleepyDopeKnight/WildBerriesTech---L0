@@ -1,0 +1,42 @@
+{
+  "order_uid": "3d487bf9a51",
+  "track_number": "WBILTRACK123",
+  "entry": "WBIL",
+  "delivery": {
+    "order_uid": "3d487bf9a51",
+    "name": "John Doe",
+    "phone": "+1234567890",
+    "zip": "12345",
+    "city": "Anytown",
+    "address": "123 Main Street",
+    "region": "Anyregion",
+    "email": "john.doe@example.com"
+  },
+  "payment": {
+    "transaction": "3d487bf9a51",
+    "currency": "USD",
+    "provider": "paypal",
+    "amount": 100,
+    "payment_dt": 1637907727,
+    "delivery_cost": 10,
+    "goods_total": 90
+  },
+  "items": [
+    {
+      "chrt_id": 123456,
+      "track_number": "WBILTRACK123",
+      "price": 90,
+      "rid": "rid123",
+      "name": "Test Item",
+      "total_price": 90,
+      "brand": "Brand X",
+      "status": 200
+    }
+  ],
+  "locale": "en",
+  "customer_id": "customer123",
+  "delivery_service": "express",
+  "shardkey": "shard1",
+  "sm_id": 123,
+  "date_created": "2023-01-15T08:30:00Z"
+}

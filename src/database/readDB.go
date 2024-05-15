@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -62,20 +64,30 @@ type Items struct {
 	Status      int    `json:"status"`
 }
 
-func FileOpen(filePath string) []byte {
-	data, err := os.ReadFile(filePath)
+func FileOpen(filesDirectory string) [][]byte {
+	files, err := os.ReadDir(filesDirectory)
 	if err != nil {
-		log.Fatal(err)
-		return nil
+		log.Println(err)
 	}
-	return data
+	var filesData [][]byte
+	for _, file := range files {
+		filePath := filepath.Join(filesDirectory, file.Name())
+		if strings.HasSuffix(filePath, ".json") {
+			fileData, err := os.ReadFile(filePath)
+			if err != nil {
+				log.Println(err)
+			}
+			filesData = append(filesData, fileData)
+		}
+	}
+	return filesData
 }
 
 func FileDeserialize(fileData []byte) *Orders {
 	var orders Orders
 	err := json.Unmarshal(fileData, &orders)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil
 	}
 	return &orders
