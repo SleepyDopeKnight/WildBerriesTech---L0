@@ -55,22 +55,32 @@ func ChannelsForHandleIdDRequest(natsStreamConnection stan.Conn, db *sql.DB) {
 	_, err := natsStreamConnection.Subscribe("id", func(message *stan.Msg) {
 		err := db.Ping()
 		if err == nil {
-			wantedOrder := FindOrder(message, db)
-			outgoingOrder, err := json.Marshal(wantedOrder)
-			if err != nil {
-				log.Fatal(err)
-			}
-			err = natsStreamConnection.Publish("data", []byte(outgoingOrder))
-			if err != nil {
-				log.Fatal(err)
-			}
+			publicationWithConnectedDB(message, natsStreamConnection, db)
 		} else {
-			err = natsStreamConnection.Publish("data", []byte(nil))
-			if err != nil {
-				log.Fatal(err)
-			}
+			publicationWithDisconnectedDB(natsStreamConnection)
 		}
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func publicationWithConnectedDB(message *stan.Msg, natsStreamConnection stan.Conn, db *sql.DB) {
+	wantedOrder := FindOrder(message, db)
+	outgoingOrder, err := json.Marshal(wantedOrder)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = natsStreamConnection.Publish("data", []byte(outgoingOrder))
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func publicationWithDisconnectedDB(natsStreamConnection stan.Conn) {
+	var emptyOrder readDB.Orders
+	outgoingOrder, err := json.Marshal(emptyOrder)
+	err = natsStreamConnection.Publish("data", []byte(outgoingOrder))
 	if err != nil {
 		log.Fatal(err)
 	}
