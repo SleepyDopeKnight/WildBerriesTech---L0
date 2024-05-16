@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	db_host     = "localhost"
-	db_port     = "5432"
-	db_user     = "jojo"
-	db_password = "123"
-	db_name     = "order_db"
+	dbHost     = "localhost"
+	dbPort     = "5432"
+	dbUser     = "jojo"
+	dbPassword = "123"
+	dbName     = "order_db"
 )
 
 func DBConnection() *sql.DB {
-	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", db_host, db_port, db_user, db_password, db_name)
+	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		log.Println(err)
