@@ -1,7 +1,7 @@
 package main
 
 import (
-	readDB "L0/database"
+	"L0/readDB"
 	_ "github.com/lib/pq"
 	"github.com/nats-io/stan.go"
 	"log"
