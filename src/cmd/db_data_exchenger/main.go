@@ -1,8 +1,8 @@
 package main
 
 import (
-	"L0/database"
-	"L0/read_db"
+	"L0/pkg/database"
+	"L0/pkg/read_db"
 	"database/sql"
 	"encoding/json"
 	_ "github.com/lib/pq"
@@ -24,7 +24,7 @@ func main() {
 
 func ChannelForGetJSON(natsStreamConnection stan.Conn, db *sql.DB) {
 	_, err := natsStreamConnection.Subscribe("orders", func(message *stan.Msg) {
-		orders := readDB.FileDeserialize(message.Data)
+		orders := readDB.readDB.FileDeserialize(message.Data)
 		if orders != nil {
 			database.FillDatabase(orders, db)
 		}
