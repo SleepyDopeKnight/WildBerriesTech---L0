@@ -1,7 +1,7 @@
 package database
 
 import (
-	"L0/read_db"
+	"L0/pkg/read_db"
 	"database/sql"
 	"fmt"
 	"github.com/nats-io/stan.go"
@@ -25,7 +25,7 @@ func DBConnection() *sql.DB {
 	return db
 }
 
-func FillDatabase(orders *readDB.Orders, db *sql.DB) {
+func FillDatabase(orders *readDB.readDB, db *sql.DB) {
 	fillDeliveryTabel(orders, db)
 	fillPaymentTabel(orders, db)
 	fillOrdersTabel(orders, db)
