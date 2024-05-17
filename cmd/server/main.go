@@ -1,7 +1,8 @@
 package main
 
 import (
-	"L0/pkg/read_db"
+	"L0/internal/database/models"
+	"L0/internal/serialization"
 	"github.com/nats-io/stan.go"
 	"html/template"
 	"log"
@@ -10,12 +11,12 @@ import (
 
 type Handler struct {
 	NatsStreamConnection stan.Conn
-	Semaphore            chan *readDB.Orders
-	Cache                map[string]*readDB.Orders
+	Semaphore            chan *models.Orders
+	Cache                map[string]*models.Orders
 }
 
 func main() {
-	cache := make(map[string]*readDB.Orders)
+	cache := make(map[string]*models.Orders)
 
 	h := Handler{Cache: cache}
 	h.connection()
@@ -30,7 +31,7 @@ func main() {
 }
 
 func (h *Handler) connection() {
-	h.Semaphore = make(chan *readDB.Orders, 1)
+	h.Semaphore = make(chan *models.Orders, 1)
 	var err error
 	h.NatsStreamConnection, err = stan.Connect("test-cluster", "server", stan.NatsURL(stan.DefaultNatsURL))
 	if err != nil {
@@ -40,11 +41,11 @@ func (h *Handler) connection() {
 
 func (h *Handler) subscribe() {
 	_, err := h.NatsStreamConnection.Subscribe("data", func(message *stan.Msg) {
-		foundedOrder := readDB.FileDeserialize(message.Data)
+		foundedOrder := serialization.FileDeserialize(message.Data)
 		if foundedOrder != nil {
 			h.Semaphore <- foundedOrder
 		} else {
-			h.Semaphore <- &readDB.Orders{}
+			h.Semaphore <- &models.Orders{}
 		}
 	})
 	if err != nil {
@@ -53,7 +54,7 @@ func (h *Handler) subscribe() {
 }
 
 func (h *Handler) rootHandler(w http.ResponseWriter, r *http.Request) {
-	h.hmtlParse(w, "/Users/chamomiv/go/WildBerriesTech-L0/templates/main/index.html", nil)
+	h.hmtlParse(w, "/Users/chamomiv/go/WildBerriesTech-L0/assets/main/index.html", nil)
 }
 
 func (h *Handler) dataHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,9 +64,9 @@ func (h *Handler) dataHandler(w http.ResponseWriter, r *http.Request) {
 		h.publishId(orderID, w)
 	}
 	if h.Cache[orderID] != nil {
-		h.hmtlParse(w, "/Users/chamomiv/go/WildBerriesTech-L0/templates/main/order_data.html", h.Cache[orderID])
+		h.hmtlParse(w, "/Users/chamomiv/go/WildBerriesTech-L0/assets/main/order_data.html", h.Cache[orderID])
 	} else {
-		h.hmtlParse(w, "/Users/chamomiv/go/WildBerriesTech-L0/templates/errors/404.html", nil)
+		h.hmtlParse(w, "/Users/chamomiv/go/WildBerriesTech-L0/assets/errors/404.html", nil)
 	}
 }
 
@@ -73,7 +74,7 @@ func (h *Handler) publishId(orderID string, w http.ResponseWriter) {
 	err := h.NatsStreamConnection.Publish("id", []byte(orderID))
 	if err != nil {
 		log.Println(err)
-		h.hmtlParse(w, "/Users/chamomiv/go/WildBerriesTech-L0/templates/errors/500.html", nil)
+		h.hmtlParse(w, "/Users/chamomiv/go/WildBerriesTech-L0/assets/errors/500.html", nil)
 	}
 	if foundedOrder := <-h.Semaphore; foundedOrder.OrderUid != "" {
 		h.Cache[orderID] = foundedOrder

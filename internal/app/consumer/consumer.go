@@ -1,30 +1,17 @@
-package main
+package consumer
 
 import (
-	"L0/pkg/database"
-	"L0/pkg/read_db"
+	"L0/internal/database"
+	"L0/internal/serialization"
 	"database/sql"
 	"encoding/json"
-	_ "github.com/lib/pq"
 	"github.com/nats-io/stan.go"
 	"log"
 )
 
-func main() {
-	db := database.DBConnection()
-	natsStreamConnection, err := stan.Connect("test-cluster", "consumer", stan.NatsURL(stan.DefaultNatsURL))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ChannelForGetJSON(natsStreamConnection, db)
-	ChannelsForHandleIdDRequest(natsStreamConnection, db)
-
-	select {}
-}
-
 func ChannelForGetJSON(natsStreamConnection stan.Conn, db *sql.DB) {
 	_, err := natsStreamConnection.Subscribe("orders", func(message *stan.Msg) {
-		orders := readDB.readDB.FileDeserialize(message.Data)
+		orders := serialization.FileDeserialize(message.Data)
 		if orders != nil {
 			database.FillDatabase(orders, db)
 		}

@@ -1,7 +1,7 @@
 package database
 
 import (
-	"L0/pkg/read_db"
+	"L0/internal/database/models"
 	"database/sql"
 	"fmt"
 	"github.com/nats-io/stan.go"
@@ -25,14 +25,14 @@ func DBConnection() *sql.DB {
 	return db
 }
 
-func FillDatabase(orders *readDB.readDB, db *sql.DB) {
+func FillDatabase(orders *models.Orders, db *sql.DB) {
 	fillDeliveryTabel(orders, db)
 	fillPaymentTabel(orders, db)
 	fillOrdersTabel(orders, db)
 	fillItemsTabel(orders, db)
 }
 
-func fillDeliveryTabel(orders *readDB.Orders, db *sql.DB) {
+func fillDeliveryTabel(orders *models.Orders, db *sql.DB) {
 	_, err := db.Exec("INSERT INTO delivery (order_uid, name, phone, zip, city, address, region, email) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
 		orders.Delivery.OrderUid, orders.Delivery.Name, orders.Delivery.Phone, orders.Delivery.Zip, orders.Delivery.City,
@@ -42,7 +42,7 @@ func fillDeliveryTabel(orders *readDB.Orders, db *sql.DB) {
 	}
 }
 
-func fillPaymentTabel(orders *readDB.Orders, db *sql.DB) {
+func fillPaymentTabel(orders *models.Orders, db *sql.DB) {
 	_, err := db.Exec("INSERT INTO payment (transaction, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
 		orders.Payment.Transaction, orders.Payment.RequestId, orders.Payment.Currency, orders.Payment.Provider, orders.Payment.Amount,
@@ -52,7 +52,7 @@ func fillPaymentTabel(orders *readDB.Orders, db *sql.DB) {
 	}
 }
 
-func fillOrdersTabel(orders *readDB.Orders, db *sql.DB) {
+func fillOrdersTabel(orders *models.Orders, db *sql.DB) {
 	_, err := db.Exec("INSERT INTO orders (order_uid, track_number, entry ,locale, internal_signature, customer_id, delivery_service, shardkey ,sm_id, date_created, oof_shard) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
 		orders.OrderUid, orders.TrackNumber, orders.Entry, orders.Locale, orders.InternalSignature, orders.CustomerId,
@@ -62,7 +62,7 @@ func fillOrdersTabel(orders *readDB.Orders, db *sql.DB) {
 	}
 }
 
-func fillItemsTabel(orders *readDB.Orders, db *sql.DB) {
+func fillItemsTabel(orders *models.Orders, db *sql.DB) {
 	for i := 0; i < len(orders.Items); i++ {
 		_, err := db.Exec("INSERT INTO items (chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status) "+
 			"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
@@ -74,8 +74,8 @@ func fillItemsTabel(orders *readDB.Orders, db *sql.DB) {
 	}
 }
 
-func FindOrder(message *stan.Msg, db *sql.DB) *readDB.Orders {
-	var wantedOrder readDB.Orders
+func FindOrder(message *stan.Msg, db *sql.DB) *models.Orders {
+	var wantedOrder models.Orders
 	scanOrderRows(&wantedOrder, db, message)
 	scanPaymentRows(&wantedOrder, db, message)
 	scanDeliveryRows(&wantedOrder, db, message)
@@ -100,7 +100,7 @@ func rowsFromItems(db *sql.DB, message *stan.Msg) *sql.Rows {
 	return itemsRows
 }
 
-func scanOrderRows(wantedOrder *readDB.Orders, db *sql.DB, message *stan.Msg) {
+func scanOrderRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 	orderRows := rowsFromOrdersPaymentDelivery(db, message, "orders", "order_uid")
 	for orderRows.Next() {
 		err := orderRows.Scan(&wantedOrder.OrderUid, &wantedOrder.TrackNumber, &wantedOrder.Entry, &wantedOrder.Locale,
@@ -113,7 +113,7 @@ func scanOrderRows(wantedOrder *readDB.Orders, db *sql.DB, message *stan.Msg) {
 	defer orderRows.Close()
 }
 
-func scanPaymentRows(wantedOrder *readDB.Orders, db *sql.DB, message *stan.Msg) {
+func scanPaymentRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 	paymentRows := rowsFromOrdersPaymentDelivery(db, message, "payment", "transaction")
 	for paymentRows.Next() {
 		err := paymentRows.Scan(&wantedOrder.Payment.Transaction, &wantedOrder.Payment.RequestId, &wantedOrder.Payment.Currency,
@@ -126,7 +126,7 @@ func scanPaymentRows(wantedOrder *readDB.Orders, db *sql.DB, message *stan.Msg) 
 	defer paymentRows.Close()
 }
 
-func scanDeliveryRows(wantedOrder *readDB.Orders, db *sql.DB, message *stan.Msg) {
+func scanDeliveryRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 	deliveryRows := rowsFromOrdersPaymentDelivery(db, message, "delivery", "order_uid")
 	for deliveryRows.Next() {
 		err := deliveryRows.Scan(&wantedOrder.Delivery.OrderUid, &wantedOrder.Delivery.Name, &wantedOrder.Delivery.Phone,
@@ -139,8 +139,8 @@ func scanDeliveryRows(wantedOrder *readDB.Orders, db *sql.DB, message *stan.Msg)
 	defer deliveryRows.Close()
 }
 
-func scanItemsRows(wantedOrder *readDB.Orders, db *sql.DB, message *stan.Msg) {
-	var item readDB.Items
+func scanItemsRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
+	var item models.Items
 	itemsRows := rowsFromItems(db, message)
 	for itemsRows.Next() {
 		err := itemsRows.Scan(&item.ChrtId, &item.TrackNumber, &item.Price, &item.Rid, &item.Name, &item.Sale, &item.Size,

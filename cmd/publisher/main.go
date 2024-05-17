@@ -1,14 +1,14 @@
 package main
 
 import (
-	"L0/pkg/read_db"
+	"L0/internal/serialization"
 	_ "github.com/lib/pq"
 	"github.com/nats-io/stan.go"
 	"log"
 )
 
 func main() {
-	filesData := readDB.FileOpen("/Users/chamomiv/go/WildBerriesTech-L0/models/")
+	filesData := serialization.OpenOrdersJSON("/Users/chamomiv/go/WildBerriesTech-L0/schema/")
 
 	natsStreamConnection, err := stan.Connect("test-cluster", "publisher", stan.NatsURL(stan.DefaultNatsURL))
 	if err != nil {
