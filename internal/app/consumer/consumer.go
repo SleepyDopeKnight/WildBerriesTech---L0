@@ -9,8 +9,8 @@ import (
 	"log"
 )
 
-func ChannelForGetJSON(natsStreamConnection stan.Conn, db *sql.DB) {
-	_, err := natsStreamConnection.Subscribe("orders", func(message *stan.Msg) {
+func ChannelForGetJSON(nc stan.Conn, db *sql.DB) {
+	_, err := nc.Subscribe("orders", func(message *stan.Msg) {
 		orders := serialization.FileDeserialize(message.Data)
 		if orders != nil {
 			database.FillDatabase(orders, db)
@@ -21,13 +21,13 @@ func ChannelForGetJSON(natsStreamConnection stan.Conn, db *sql.DB) {
 	}
 }
 
-func ChannelsForHandleIdDRequest(natsStreamConnection stan.Conn, db *sql.DB) {
-	_, err := natsStreamConnection.Subscribe("id", func(message *stan.Msg) {
+func ChannelsForHandleIdDRequest(nc stan.Conn, db *sql.DB) {
+	_, err := nc.Subscribe("id", func(message *stan.Msg) {
 		err := db.Ping()
 		if err == nil {
-			publicationOrder(message, natsStreamConnection, db)
+			publicationOrder(message, nc, db)
 		} else {
-			publicationOrder(message, natsStreamConnection, nil)
+			publicationOrder(message, nc, nil)
 		}
 	})
 	if err != nil {
@@ -35,21 +35,21 @@ func ChannelsForHandleIdDRequest(natsStreamConnection stan.Conn, db *sql.DB) {
 	}
 }
 
-func publicationOrder(message *stan.Msg, natsStreamConnection stan.Conn, db *sql.DB) {
+func publicationOrder(message *stan.Msg, nc stan.Conn, db *sql.DB) {
 	if db != nil {
 		wantedOrder := database.FindOrder(message, db)
 		outgoingOrder, err := json.Marshal(wantedOrder)
 		if err != nil {
 			log.Println(err)
 		}
-		publish(natsStreamConnection, outgoingOrder)
+		publish(nc, outgoingOrder)
 	} else {
-		publish(natsStreamConnection, nil)
+		publish(nc, nil)
 	}
 }
 
-func publish(natsStreamConnection stan.Conn, order []byte) {
-	err := natsStreamConnection.Publish("data", order)
+func publish(nc stan.Conn, order []byte) {
+	err := nc.Publish("data", order)
 	if err != nil {
 		log.Println(err)
 	}

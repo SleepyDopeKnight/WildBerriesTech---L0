@@ -1,22 +1,18 @@
 package main
 
 import (
-	"L0/internal/serialization"
+	nats "L0/pkg/broker_connect"
+	"L0/pkg/reader_json"
 	_ "github.com/lib/pq"
-	"github.com/nats-io/stan.go"
 	"log"
 )
 
 func main() {
-	filesData := serialization.OpenOrdersJSON("/Users/chamomiv/go/WildBerriesTech-L0/schema/")
-
-	natsStreamConnection, err := stan.Connect("test-cluster", "publisher", stan.NatsURL(stan.DefaultNatsURL))
-	if err != nil {
-		log.Println(err)
-	}
+	filesData := reader_json.Open("./schema/")
+	nc := nats.Connect("test-cluster", "publisher")
 
 	for _, fileData := range filesData {
-		err = natsStreamConnection.Publish("orders", []byte(fileData))
+		err := nc.Publish("orders", []byte(fileData))
 		if err != nil {
 			log.Println(err)
 		}
