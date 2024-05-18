@@ -23,12 +23,14 @@ func (h *Handler) StartPage(w http.ResponseWriter, _ *http.Request) {
 
 func (h *Handler) ShowOrder(w http.ResponseWriter, r *http.Request) {
 	h.StartPage(w, r)
+
 	orderID := r.FormValue("id")
 	if h.cache[orderID] == nil {
 		if foundedOrder := h.bm.GetOrder(orderID, w); foundedOrder.OrderUid != "" {
 			h.cache[orderID] = foundedOrder
 		}
 	}
+
 	if h.cache[orderID] != nil {
 		html.ParseTemplate(w, "./assets/main/order_data.html", h.cache[orderID])
 	} else {

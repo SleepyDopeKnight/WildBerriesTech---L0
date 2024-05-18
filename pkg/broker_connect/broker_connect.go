@@ -11,5 +11,6 @@ func Connect(clusterID, clientID string) stan.Conn {
 	if err != nil {
 		log.Println(err)
 	}
+
 	return nc
 }

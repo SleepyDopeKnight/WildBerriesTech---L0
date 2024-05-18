@@ -18,6 +18,7 @@ func New(h handlers.Handler) Server {
 func (s *Server) Run(port string) {
 	http.HandleFunc("/", s.h.StartPage)
 	http.HandleFunc("/data", s.h.ShowOrder)
+
 	if err := http.ListenAndServe(port, nil); err != nil {
 		log.Println(err)
 	}

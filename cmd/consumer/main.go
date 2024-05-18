@@ -13,6 +13,7 @@ import (
 
 func main() {
 	config.Load(".env")
+
 	db := database.DBConnection(os.Getenv("DB_DSN"))
 	nc := nats.Connect("test-cluster", "consumer")
 	consumer.ChannelForGetJSON(nc, db)

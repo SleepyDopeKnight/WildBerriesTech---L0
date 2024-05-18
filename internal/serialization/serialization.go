@@ -9,10 +9,10 @@ import (
 
 func FileDeserialize(fileData []byte) *models.Orders {
 	var orders models.Orders
-	err := json.Unmarshal(fileData, &orders)
-	if err != nil {
+	if err := json.Unmarshal(fileData, &orders); err != nil {
 		log.Println(err)
 		return nil
 	}
+
 	return &orders
 }

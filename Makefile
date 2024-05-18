@@ -7,6 +7,9 @@ style:
 	goimports -w .
 	gofumpt -w .
 
+linter:
+	golangci-lint run ./...
+
 consumer:
 	go run cmd/consumer/main.go
 

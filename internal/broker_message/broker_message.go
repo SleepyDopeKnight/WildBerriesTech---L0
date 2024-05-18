@@ -23,6 +23,7 @@ func New() BrokerMessage {
 		semaphore: make(chan *models.Orders, 1),
 	}
 	bm.subscribe()
+
 	return bm
 }
 
@@ -44,5 +45,6 @@ func (b *BrokerMessage) GetOrder(orderID string, w http.ResponseWriter) *models.
 		log.Println(err)
 		html.ParseTemplate(w, "./assets/errors/500.html", nil)
 	}
+
 	return <-b.semaphore
 }

@@ -12,7 +12,9 @@ func Open(filesDirectory string) [][]byte {
 	if err != nil {
 		log.Println(err)
 	}
+
 	var filesData [][]byte
+
 	for _, file := range files {
 		filePath := filepath.Join(filesDirectory, file.Name())
 		if strings.HasSuffix(filePath, ".json") {
@@ -20,8 +22,10 @@ func Open(filesDirectory string) [][]byte {
 			if err != nil {
 				log.Println(err)
 			}
+
 			filesData = append(filesData, fileData)
 		}
 	}
+
 	return filesData
 }

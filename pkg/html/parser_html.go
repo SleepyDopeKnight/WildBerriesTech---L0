@@ -11,8 +11,8 @@ func ParseTemplate(w http.ResponseWriter, templateFile string, data any) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	err = page.Execute(w, data)
-	if err != nil {
+
+	if err = page.Execute(w, data); err != nil {
 		log.Println(err)
 	}
 }

@@ -15,6 +15,7 @@ func DBConnection(connectionString string) *sql.DB {
 	if err != nil {
 		log.Println(err)
 	}
+
 	return db
 }
 
@@ -69,19 +70,23 @@ func fillItemsTabel(orders *models.Orders, db *sql.DB) {
 
 func FindOrder(message *stan.Msg, db *sql.DB) *models.Orders {
 	var wantedOrder models.Orders
+
 	scanOrderRows(&wantedOrder, db, message)
 	scanPaymentRows(&wantedOrder, db, message)
 	scanDeliveryRows(&wantedOrder, db, message)
 	scanItemsRows(&wantedOrder, db, message)
+
 	return &wantedOrder
 }
 
 func rowsFromOrdersPaymentDelivery(db *sql.DB, message *stan.Msg, tableName, rowName string) *sql.Rows {
 	query := fmt.Sprintf("select * from %s where %s = '%s'", tableName, rowName, message.Data)
+
 	rows, err := db.Query(query)
 	if err != nil {
 		log.Println(err)
 	}
+
 	return rows
 }
 
@@ -90,6 +95,7 @@ func rowsFromItems(db *sql.DB, message *stan.Msg) *sql.Rows {
 	if err != nil {
 		log.Println(err)
 	}
+
 	return itemsRows
 }
 
@@ -126,18 +132,22 @@ func scanDeliveryRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg)
 			log.Println(err)
 		}
 	}
+
 	defer deliveryRows.Close()
 }
 
 func scanItemsRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 	var item models.Items
+
 	itemsRows := rowsFromItems(db, message)
 	for itemsRows.Next() {
 		if err := itemsRows.Scan(&item.ChrtId, &item.TrackNumber, &item.Price, &item.Rid, &item.Name, &item.Sale, &item.Size,
 			&item.TotalPrice, &item.NmId, &item.Brand, &item.Status); err != nil {
 			log.Println(err)
 		}
+
 		wantedOrder.Items = append(wantedOrder.Items, item)
 	}
+
 	defer itemsRows.Close()
 }

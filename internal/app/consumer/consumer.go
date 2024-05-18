@@ -36,10 +36,12 @@ func ChannelsForHandleIdDRequest(nc stan.Conn, db *sql.DB) {
 func publicationOrder(message *stan.Msg, nc stan.Conn, db *sql.DB) {
 	if db != nil {
 		wantedOrder := database.FindOrder(message, db)
+
 		outgoingOrder, err := json.Marshal(wantedOrder)
 		if err != nil {
 			log.Println(err)
 		}
+
 		publish(nc, outgoingOrder)
 	} else {
 		publish(nc, nil)
