@@ -1,23 +1,16 @@
 package database
 
 import (
-	"L0/internal/database/models"
 	"database/sql"
 	"fmt"
-	"github.com/nats-io/stan.go"
 	"log"
+
+	"L0/internal/database/models"
+
+	"github.com/nats-io/stan.go"
 )
 
-const (
-	dbHost     = "localhost"
-	dbPort     = "5432"
-	dbUser     = "jojo"
-	dbPassword = "123"
-	dbName     = "order_db"
-)
-
-func DBConnection() *sql.DB {
-	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
+func DBConnection(connectionString string) *sql.DB {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		log.Println(err)
@@ -103,10 +96,9 @@ func rowsFromItems(db *sql.DB, message *stan.Msg) *sql.Rows {
 func scanOrderRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 	orderRows := rowsFromOrdersPaymentDelivery(db, message, "orders", "order_uid")
 	for orderRows.Next() {
-		err := orderRows.Scan(&wantedOrder.OrderUid, &wantedOrder.TrackNumber, &wantedOrder.Entry, &wantedOrder.Locale,
+		if err := orderRows.Scan(&wantedOrder.OrderUid, &wantedOrder.TrackNumber, &wantedOrder.Entry, &wantedOrder.Locale,
 			&wantedOrder.InternalSignature, &wantedOrder.CustomerId, &wantedOrder.DeliveryService, &wantedOrder.Shardkey,
-			&wantedOrder.SmId, &wantedOrder.DateCreated, &wantedOrder.OofShard)
-		if err != nil {
+			&wantedOrder.SmId, &wantedOrder.DateCreated, &wantedOrder.OofShard); err != nil {
 			log.Println(err)
 		}
 	}
@@ -116,10 +108,9 @@ func scanOrderRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 func scanPaymentRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 	paymentRows := rowsFromOrdersPaymentDelivery(db, message, "payment", "transaction")
 	for paymentRows.Next() {
-		err := paymentRows.Scan(&wantedOrder.Payment.Transaction, &wantedOrder.Payment.RequestId, &wantedOrder.Payment.Currency,
+		if err := paymentRows.Scan(&wantedOrder.Payment.Transaction, &wantedOrder.Payment.RequestId, &wantedOrder.Payment.Currency,
 			&wantedOrder.Payment.Provider, &wantedOrder.Payment.Amount, &wantedOrder.Payment.PaymentDt, &wantedOrder.Payment.Bank,
-			&wantedOrder.Payment.DeliveryCost, &wantedOrder.Payment.GoodsTotal, &wantedOrder.Payment.CustomFee)
-		if err != nil {
+			&wantedOrder.Payment.DeliveryCost, &wantedOrder.Payment.GoodsTotal, &wantedOrder.Payment.CustomFee); err != nil {
 			log.Println(err)
 		}
 	}
@@ -129,10 +120,9 @@ func scanPaymentRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) 
 func scanDeliveryRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 	deliveryRows := rowsFromOrdersPaymentDelivery(db, message, "delivery", "order_uid")
 	for deliveryRows.Next() {
-		err := deliveryRows.Scan(&wantedOrder.Delivery.OrderUid, &wantedOrder.Delivery.Name, &wantedOrder.Delivery.Phone,
+		if err := deliveryRows.Scan(&wantedOrder.Delivery.OrderUid, &wantedOrder.Delivery.Name, &wantedOrder.Delivery.Phone,
 			&wantedOrder.Delivery.Zip, &wantedOrder.Delivery.City, &wantedOrder.Delivery.Address,
-			&wantedOrder.Delivery.Region, &wantedOrder.Delivery.Email)
-		if err != nil {
+			&wantedOrder.Delivery.Region, &wantedOrder.Delivery.Email); err != nil {
 			log.Println(err)
 		}
 	}
@@ -143,9 +133,8 @@ func scanItemsRows(wantedOrder *models.Orders, db *sql.DB, message *stan.Msg) {
 	var item models.Items
 	itemsRows := rowsFromItems(db, message)
 	for itemsRows.Next() {
-		err := itemsRows.Scan(&item.ChrtId, &item.TrackNumber, &item.Price, &item.Rid, &item.Name, &item.Sale, &item.Size,
-			&item.TotalPrice, &item.NmId, &item.Brand, &item.Status)
-		if err != nil {
+		if err := itemsRows.Scan(&item.ChrtId, &item.TrackNumber, &item.Price, &item.Rid, &item.Name, &item.Sale, &item.Size,
+			&item.TotalPrice, &item.NmId, &item.Brand, &item.Status); err != nil {
 			log.Println(err)
 		}
 		wantedOrder.Items = append(wantedOrder.Items, item)

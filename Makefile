@@ -3,6 +3,10 @@
 container:
 	docker compose up -d
 
+style:
+	goimports -w .
+	gofumpt -w .
+
 consumer:
 	go run cmd/consumer/main.go
 

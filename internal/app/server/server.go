@@ -1,9 +1,10 @@
 package server
 
 import (
-	"L0/internal/api/handlers"
 	"log"
 	"net/http"
+
+	"L0/internal/api/handlers"
 )
 
 type Server struct {
@@ -17,8 +18,7 @@ func New(h handlers.Handler) Server {
 func (s *Server) Run(port string) {
 	http.HandleFunc("/", s.h.StartPage)
 	http.HandleFunc("/data", s.h.ShowOrder)
-	err := http.ListenAndServe(port, nil)
-	if err != nil {
+	if err := http.ListenAndServe(port, nil); err != nil {
 		log.Println(err)
 	}
 }

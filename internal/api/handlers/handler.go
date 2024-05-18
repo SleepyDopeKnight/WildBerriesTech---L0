@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"net/http"
+
 	nats "L0/internal/broker_message"
 	"L0/internal/database/models"
 	"L0/pkg/html"
-	"net/http"
 )
 
 type Handler struct {
@@ -16,7 +17,7 @@ func New(bm nats.BrokerMessage) Handler {
 	return Handler{cache: map[string]*models.Orders{}, bm: bm}
 }
 
-func (h *Handler) StartPage(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) StartPage(w http.ResponseWriter, _ *http.Request) {
 	html.ParseTemplate(w, "./assets/main/index.html", nil)
 }
 

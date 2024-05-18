@@ -1,14 +1,15 @@
 package nats
 
 import (
-	"github.com/nats-io/stan.go"
 	"log"
+
+	"github.com/nats-io/stan.go"
 )
 
 func Connect(clusterID, clientID string) stan.Conn {
 	nc, err := stan.Connect(clusterID, clientID, stan.NatsURL(stan.DefaultNatsURL))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	return nc
 }
